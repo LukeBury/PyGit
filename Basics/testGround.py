@@ -1,71 +1,92 @@
-import numpy as np
-from scipy.integrate import odeint
-from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
-
-def int_2BI(X,t,u):
-	r = np.array([X[0], X[1], X[2]])
-	r_mag = np.linalg.norm(r)
-
-	a_2B = r*(-u / (r_mag**3))
-
-	v = np.array([X[3], X[4], X[5]])
-
-	
-	dXdt = np.hstack([v, a_2B])
-	'''
-	dXdt = [v, a_2B]
-	'''
-	return dXdt
+import numpy as np
+import matplotlib.path as mpath
+import matplotlib.lines as mlines
+import matplotlib.patches as mpatches
+from matplotlib.collections import PatchCollection
 
 
-# Constants
-R_Earth = 6378 # km
-u_Earth = 398600.4415
-
-# ICs
-r0 = [R_Earth+500, 0, 0]
-v0 = [0, 7.612683986157750, 0]
+def label(xy, text):
+    y = xy[1] - 0.15  # shift y-value for label so that it's below the artist
+    plt.text(xy[0], y, text, ha="center", family='sans-serif', size=14)
 
 
-X0 = np.hstack([r0, v0])
+fig, ax = plt.subplots()
+# create 3x3 grid to plot the artists
+grid = np.mgrid[0.2:0.8:3j, 0.2:0.8:3j].reshape(2, -1).T
+
+patches = []
+
+# add a circle
+circle = mpatches.Circle((0,0), 0.1, ec="none")
+patches.append(circle)
+label((0,0),"Circle")
 '''
-X0 = [r0, v0]
-'''
-print X0
-### Time
-'''
-t0 = 0
-tf = 90*60
-dt = 10
-time = np.arange(t0, tf+dt, dt)
-'''
-time = np.linspace(0,95*60,1000)
+# add a rectangle
+rect = mpatches.Rectangle(grid[1] - [0.025, 0.05], 0.05, 0.1, ec="none")
+patches.append(rect)
+label(grid[1], "Rectangle")
 
-print len(time)
+# add a wedge
+wedge = mpatches.Wedge(grid[2], 0.1, 30, 270, ec="none")
+patches.append(wedge)
+label(grid[2], "Wedge")
 
-X = odeint(int_2BI, X0, time, args = (u_Earth,))
+# add a Polygon
+polygon = mpatches.RegularPolygon(grid[3], 5, 0.1)
+patches.append(polygon)
+label(grid[3], "Polygon")
 
+# add an ellipse
+ellipse = mpatches.Ellipse(grid[4], 0.2, 0.1)
+patches.append(ellipse)
+label(grid[4], "Ellipse")
+
+# add an arrow
+arrow = mpatches.Arrow(grid[5, 0] - 0.05, grid[5, 1] - 0.05, 0.1, 0.1,
+                       width=0.1)
+patches.append(arrow)
+label(grid[5], "Arrow")
+
+# add a path patch
+Path = mpath.Path
+path_data = [
+    (Path.MOVETO, [0.018, -0.11]),
+    (Path.CURVE4, [-0.031, -0.051]),
+    (Path.CURVE4, [-0.115, 0.073]),
+    (Path.CURVE4, [-0.03, 0.073]),
+    (Path.LINETO, [-0.011, 0.039]),
+    (Path.CURVE4, [0.043, 0.121]),
+    (Path.CURVE4, [0.075, -0.005]),
+    (Path.CURVE4, [0.035, -0.027]),
+    (Path.CLOSEPOLY, [0.018, -0.11])]
+codes, verts = zip(*path_data)
+path = mpath.Path(verts + grid[6], codes)
+patch = mpatches.PathPatch(path)
+patches.append(patch)
+label(grid[6], "PathPatch")
+
+# add a fancy box
+fancybox = mpatches.FancyBboxPatch(
+    grid[7] - [0.025, 0.05], 0.05, 0.1,
+    boxstyle=mpatches.BoxStyle("Round", pad=0.02))
+patches.append(fancybox)
+label(grid[7], "FancyBboxPatch")
+
+# add a line
+x, y = np.array([[-0.06, 0.0, 0.1], [0.05, -0.05, 0.05]])
+line = mlines.Line2D(x + grid[8, 0], y + grid[8, 1], lw=5., alpha=0.3)
+label(grid[8], "Line2D")
 '''
-plt.plot(t, sol[:, 0], 'b', label='theta(t)')
-plt.plot(t, sol[:, 1], 'g', label='omega(t)')
-plt.legend(loc='best')
-plt.xlabel('t')
-plt.grid()
+colors = np.linspace(0, 1, len(patches))
+collection = PatchCollection(patches, cmap=plt.cm.hsv, alpha=0.9)
+#collection.set_array(np.array(colors))
+print np.array(colors)
+ax.add_collection(collection)
+#ax.add_line(line)
+
+plt.axis('equal')
+plt.axis('off')
+plt.tight_layout()
+
 plt.show()
-'''
-
-plt.plot(X[:,0],X[:,1],'b',label='orbit')
-plt.legend(loc='best')
-plt.xlabel('X')
-plt.ylabel('Y')
-plt.grid()
-plt.show()
-
-
-'''
-d = np.array([1, 2, 3, 1, 1])
-d_mag = np.linalg.norm(d)
-print(d_mag)
-print d*2
-'''
